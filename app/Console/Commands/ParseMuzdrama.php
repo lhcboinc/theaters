@@ -39,7 +39,13 @@ class ParseMuzdrama extends Command
      */
     public function handle()
     {
-        $response = Http::get('https://muzdrama.ru/');
+        self::parseMonth("https://muzdrama.ru/?month=7");
+        return 0;
+    }
+
+    private static function parseMonth($url)
+    {
+        $response = Http::get($url);
         if (!$response) throw new \Exception('Error reading page, stopped');
         $doc = new \DOMDocument();
         libxml_use_internal_errors(true);
@@ -47,6 +53,5 @@ class ParseMuzdrama extends Command
         $finder = new \DomXPath($doc);
         $node = $finder->query("//*[contains(concat(' ', normalize-space(@id), ' '), 'afisha')]/div");
         print_r($node);
-        return 0;
     }
 }
