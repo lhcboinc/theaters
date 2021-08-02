@@ -41,8 +41,8 @@ class ParseMuzdrama extends Command
      */
     public function handle()
     {
-        self::parseMonth(self::$host . "/?month=7");
-        return 0;
+        for ($i=1; $i<=12; $i++)
+            self::parseMonth(self::$host . "/?month=$i");
     }
 
     private static function parseMonth($url)
@@ -78,9 +78,13 @@ class ParseMuzdrama extends Command
         foreach ($item->item(0)->attributes as $attribute) {
             if ($attribute->name == 'src') {
                 $imgSrc = $attribute->value;
+                break;
             }
         }
-        print $imgSrc."\n";
+        print $imgSrc ."\n";
+        $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/ul[@class='performance__icons flex flex-wrap']/li/span", $root->item(0));
+        $ageLimit = intval($element->item(0)->nodeValue);
+
         $liElements = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/ul[@class='performance__dates']/li", $root->item(0));
         $dateTimes = null;
         if ($liElements->length > 0) {
@@ -94,6 +98,9 @@ class ParseMuzdrama extends Command
         $duration = trim(@$element->item(0)->nodeValue, ' ч.');
         $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/h1[@class='performance__title']", $root->item(0));
         $title = @$element->item(0)->nodeValue;
-        $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/h1[@class='performance__title']", $root->item(0));
+
+        $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/div[@class='afisha__content content']", $root->item(0));
+        $description = trim(@$element->item(0)->nodeValue);
+
     }
 }
