@@ -86,6 +86,7 @@ class ParseMuzdrama extends Command
             $performance->seance_dt_list = $performanceData['seance_dt_list'];
             $performance->price = $price;
             $performance->image_urls = $performanceData['image_urls'];
+            $performance->type = Performances::TYPE_THEATER;
             $performance->save();
             $performance->theaters()->sync([self::$theaterId]);
         }

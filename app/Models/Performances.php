@@ -13,6 +13,8 @@ class Performances extends Model
 
     protected $table = 'performances';
 
+    const TYPE_THEATER = 'theater';
+
     public function theaters()
     {
         return $this->belongsToMany(Theaters::class, 'performance_theater', 'performance_id','theater_id');
