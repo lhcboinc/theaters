@@ -16,6 +16,8 @@ class CreateTheatersTable extends Migration
         Schema::create('theaters', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('domain_name')->nullable()->default(null);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

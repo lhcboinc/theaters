@@ -15,11 +15,15 @@ class CreatePerformancesTable extends Migration
     {
         Schema::create('performances', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('description')->default(null)->nullable();
-            $table->integer('duration')->default(null)->nullable();
-            $table->integer('age_limit')->default(null)->nullable();
-            $table->dateTime('seance_dt')->default(null)->nullable();
+            $table->string('title');
+            $table->text('description')->nullable()->default(null);
+            $table->integer('duration')->nullable()->default(null);
+            $table->integer('age_limit')->nullable()->default(null);
+            $table->string('seance_dt_list')->nullable()->default(null);
+            $table->string('price')->nullable()->default(null);
+            $table->text('image_urls')->nullable()->default(null);
+            $table->string('type')->nullable()->default(null);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

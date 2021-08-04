@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Performances;
+use App\Models\Theaters;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
@@ -23,6 +25,11 @@ class ParseMuzdrama extends Command
      */
     protected $description = 'Command description';
 
+    const DOMAIN = 'muzdrama.ru';
+
+    private static $theaterId;
+    private static $performances;
+
     /**
      * Create a new command instance.
      *
@@ -31,6 +38,8 @@ class ParseMuzdrama extends Command
     public function __construct()
     {
         parent::__construct();
+
+        self::$performances = Performances::all()->toArray();
     }
 
     /**
@@ -41,6 +50,9 @@ class ParseMuzdrama extends Command
      */
     public function handle()
     {
+        if (!(self::$theaterId = @Theaters::where('domain_name', self::DOMAIN)->first()->id))
+            throw new \Exception('Muzdrama not found');
+
         for ($i=1; $i<=12; $i++)
             self::parseMonth(self::$host . "/?month=$i");
     }
@@ -59,7 +71,23 @@ class ParseMuzdrama extends Command
             $href = $item->item(0)->attributes->item(0)->value;
             $item = $finder->query(".//div/div[@class='booking__price']/b", $node);
             $price = $item->item(0)->nodeValue;
-            self::parsePerformance(self::$host . $href);
+            $performanceData = self::parsePerformance(self::$host . $href);
+            if (in_array($performanceData['title'], array_column(self::$performances, 'title'))) {
+                print "Edit performance\n";
+                $performance = Performances::where('title', $performanceData['title'])->first();
+            } else {
+                print "Create performance\n";
+                $performance = new Performances;
+            }
+            $performance->title = $performanceData['title'];
+            $performance->description = $performanceData['description'];
+            $performance->duration = $performanceData['duration'];
+            $performance->age_limit = $performanceData['age_limit'];
+            $performance->seance_dt_list = json_encode($performanceData['seance_dt_list']);
+            $performance->price = $price;
+            $performance->image_urls = json_encode($performanceData['image_urls']);
+            $performance->save();
+            $performance->theaters()->sync([self::$theaterId]);
         }
     }
 
@@ -77,11 +105,10 @@ class ParseMuzdrama extends Command
         $item = $finder->query(".//div[@class='afisha__image-wrapper afisha__image-wrapper_content']/a/img", $root->item(0));
         foreach ($item->item(0)->attributes as $attribute) {
             if ($attribute->name == 'src') {
-                $imgSrc = $attribute->value;
+                $imgSrc = 'https://muzdrama.ru' . $attribute->value;
                 break;
             }
         }
-        print $imgSrc ."\n";
         $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/ul[@class='performance__icons flex flex-wrap']/li/span", $root->item(0));
         $ageLimit = intval($element->item(0)->nodeValue);
 
@@ -95,12 +122,21 @@ class ParseMuzdrama extends Command
             }
         }
         $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/div[@class='performance__duration']/span", $root->item(0));
-        $duration = trim(@$element->item(0)->nodeValue, ' ч.');
+        @(list($hours, $minutes) = explode(':', trim(@$element->item(0)->nodeValue, ' ч.')));
+        $duration = $hours * 60 + $minutes;
         $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/h1[@class='performance__title']", $root->item(0));
         $title = @$element->item(0)->nodeValue;
 
         $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/div[@class='afisha__content content']", $root->item(0));
         $description = trim(@$element->item(0)->nodeValue);
 
+        return [
+            'title' => $title,
+            'description' => $description,
+            'duration' => $duration,
+            'age_limit' => $ageLimit,
+            'seance_dt_list' => json_encode($dateTimes),
+            'image_urls' => json_encode([$imgSrc]),
+        ];
     }
 }
