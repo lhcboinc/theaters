@@ -83,9 +83,9 @@ class ParseMuzdrama extends Command
             $performance->description = $performanceData['description'];
             $performance->duration = $performanceData['duration'];
             $performance->age_limit = $performanceData['age_limit'];
-            $performance->seance_dt_list = json_encode($performanceData['seance_dt_list']);
+            $performance->seance_dt_list = $performanceData['seance_dt_list'];
             $performance->price = $price;
-            $performance->image_urls = json_encode($performanceData['image_urls']);
+            $performance->image_urls = $performanceData['image_urls'];
             $performance->save();
             $performance->theaters()->sync([self::$theaterId]);
         }
