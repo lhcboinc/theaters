@@ -16,7 +16,7 @@ class PerformancesController extends Controller
 
     public function index()
     {
-        $collection = Performances::with(['theaters'])->get();
+        $collection = Performances::with(['theaters'])->limit(5)->get();
         $collection->map(function ($item) {
             $item['seance_dt_list'] = json_decode($item['seance_dt_list']);
             $item['image_urls'] = json_decode($item['image_urls']);
