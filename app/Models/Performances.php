@@ -14,9 +14,12 @@ class Performances extends Model
     protected $table = 'performances';
 
     const TYPE_THEATER = 'theater';
+    const TYPE_MOVIE = 'movie';
 
     public function theaters()
     {
-        return $this->belongsToMany(Theaters::class, 'performance_theater', 'performance_id','theater_id');
+        return $this->belongsToMany(Theaters::class, 'performance_theater', 'performance_id','theater_id')
+            ->withPivot(['seance_dt_list','price']);
+
     }
 }

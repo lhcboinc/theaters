@@ -19,8 +19,6 @@ class CreatePerformancesTable extends Migration
             $table->text('description')->nullable()->default(null);
             $table->integer('duration')->nullable()->default(null);
             $table->integer('age_limit')->nullable()->default(null);
-            $table->string('seance_dt_list')->nullable()->default(null);
-            $table->string('price')->nullable()->default(null);
             $table->text('image_urls')->nullable()->default(null);
             $table->string('type')->nullable()->default(null);
             $table->softDeletes();

@@ -38,8 +38,6 @@ class ParseMuzdrama extends Command
     public function __construct()
     {
         parent::__construct();
-
-        self::$performances = Performances::all()->toArray();
     }
 
     /**
@@ -50,6 +48,8 @@ class ParseMuzdrama extends Command
      */
     public function handle()
     {
+        self::$performances = Performances::all()->toArray();
+
         if (!(self::$theaterId = @Theaters::where('domain_name', self::DOMAIN)->first()->id))
             throw new \Exception('Muzdrama not found');
 
@@ -72,23 +72,30 @@ class ParseMuzdrama extends Command
             $item = $finder->query(".//div/div[@class='booking__price']/b", $node);
             $price = $item->item(0)->nodeValue;
             $performanceData = self::parsePerformance(self::$host . $href);
+            $isNew = false;
             if (in_array($performanceData['title'], array_column(self::$performances, 'title'))) {
                 print "Edit performance\n";
                 $performance = Performances::where('title', $performanceData['title'])->first();
             } else {
                 print "Create performance\n";
                 $performance = new Performances;
+                $isNew = true;
             }
             $performance->title = $performanceData['title'];
             $performance->description = $performanceData['description'];
             $performance->duration = $performanceData['duration'];
             $performance->age_limit = $performanceData['age_limit'];
-            $performance->seance_dt_list = $performanceData['seance_dt_list'];
-            $performance->price = $price;
             $performance->image_urls = $performanceData['image_urls'];
             $performance->type = Performances::TYPE_THEATER;
             $performance->save();
-            $performance->theaters()->sync([self::$theaterId]);
+            $performance->theaters()->sync([self::$theaterId => [
+                'seance_dt_list' => $performanceData['seance_dt_list'],
+                'price' => $price
+            ]]);
+
+            if ($isNew) {
+                self::$performances[] = $performance;
+            }
         }
     }
 

@@ -29,8 +29,9 @@ class PerformancesController extends Controller
             $query->limit($limit);
         $collection = $query->get();
         $collection->map(function ($item) {
-            $item['seance_dt_list'] = json_decode($item['seance_dt_list']);
             $item['image_urls'] = json_decode($item['image_urls']);
+            $seance_dt_list = $item->theaters[0]->pivot->seance_dt_list;
+            $item->theaters[0]->pivot->seance_dt_list = json_decode($seance_dt_list);
         });
         return response()->json($collection);
     }
