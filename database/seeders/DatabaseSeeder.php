@@ -19,5 +19,9 @@ class DatabaseSeeder extends Seeder
             'name' => 'ДОНЕЦКИЙ ГОСУДАРСТВЕННЫЙ АКАДЕМИЧЕСКИЙ МУЗЫКАЛЬНО-ДРАМАТИЧЕСКИЙ ТЕАТР ИМЕНИ М.М.БРОВУНА',
             'domain_name' => 'muzdrama.ru',
         ]);
+        Theaters::insert([
+            'name' => 'Кинотеатр Фунтура Синема',
+            'domain_name' => 'funtura-cinema.ru',
+        ]);
     }
 }

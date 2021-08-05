@@ -22,7 +22,7 @@ class CreateTheaterPerformancesPivotTable extends Migration
             $table->foreign('theater_id')->references('id')
                 ->on('theaters')->onDelete('cascade');
 
-            $table->string('seance_dt_list')->nullable()->default(null);
+            $table->string('seance_dt_list', 1000)->nullable()->default(null);
             $table->string('price')->nullable()->default(null);
 
             $table->timestamps();

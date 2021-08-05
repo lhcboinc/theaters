@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Http;
 
 class ParseMuzdrama extends Command
 {
-    protected static $host = 'https://muzdrama.ru';
-
     /**
      * The name and signature of the console command.
      *
@@ -25,6 +23,7 @@ class ParseMuzdrama extends Command
      */
     protected $description = 'Command description';
 
+    const HOST = 'https://muzdrama.ru';
     const DOMAIN = 'muzdrama.ru';
 
     private static $theaterId;
@@ -48,19 +47,20 @@ class ParseMuzdrama extends Command
      */
     public function handle()
     {
-        self::$performances = Performances::all()->toArray();
+        self::$performances = Performances::where('type', Performances::TYPE_THEATER)->get()->toArray();
 
         if (!(self::$theaterId = @Theaters::where('domain_name', self::DOMAIN)->first()->id))
             throw new \Exception('Muzdrama not found');
 
         for ($i=1; $i<=12; $i++)
-            self::parseMonth(self::$host . "/?month=$i");
+            self::parseMonth(self::HOST . "/?month=$i");
     }
 
     private static function parseMonth($url)
     {
         $response = Http::get($url);
-        if (!$response) throw new \Exception('Error reading page, stopped');
+        if (!$response)
+            throw new \Exception('Error reading page, stopped');
         $doc = new \DOMDocument();
         libxml_use_internal_errors(true);
         $doc->loadHTML($response);
@@ -71,7 +71,8 @@ class ParseMuzdrama extends Command
             $href = $item->item(0)->attributes->item(0)->value;
             $item = $finder->query(".//div/div[@class='booking__price']/b", $node);
             $price = $item->item(0)->nodeValue;
-            $performanceData = self::parsePerformance(self::$host . $href);
+
+            $performanceData = self::parsePerformance(self::HOST . $href);
             $isNew = false;
             if (in_array($performanceData['title'], array_column(self::$performances, 'title'))) {
                 print "Edit performance\n";
@@ -93,18 +94,31 @@ class ParseMuzdrama extends Command
                 'price' => $price
             ]]);
 
-            if ($isNew) {
+            if ($isNew)
                 self::$performances[] = $performance;
-            }
         }
     }
 
     private static function parsePerformance($url)
     {
-        $month = ['сентября' => 'september'];
+        $month = [
+            'января' => 'january',
+            'февраля' => 'february',
+            'марта' => 'march',
+            'апреля' => 'april',
+            'майа' => 'may',
+            'июня' => 'june',
+            'июля' => 'july',
+            'августа' => 'august',
+            'сентября' => 'september',
+            'октября' => 'october',
+            'ноября' => 'november',
+            'декабря' => 'december',
+        ];
         $imgSrc = null;
         $response = Http::get($url);
-        if (!$response) throw new \Exception('Error reading page, stopped');
+        if (!$response)
+            throw new \Exception('Error reading page, stopped');
         $doc = new \DOMDocument();
         libxml_use_internal_errors(true);
         $doc->loadHTML($response);
@@ -113,7 +127,7 @@ class ParseMuzdrama extends Command
         $item = $finder->query(".//div[@class='afisha__image-wrapper afisha__image-wrapper_content']/a/img", $root->item(0));
         foreach ($item->item(0)->attributes as $attribute) {
             if ($attribute->name == 'src') {
-                $imgSrc = 'https://muzdrama.ru' . $attribute->value;
+                $imgSrc = self::HOST . $attribute->value;
                 break;
             }
         }
@@ -126,7 +140,11 @@ class ParseMuzdrama extends Command
             $dateTimes = [];
             foreach ($liElements as $element) {
                 list($date, $startTime) = explode(' в ', trim($element->nodeValue, ';'));
-                $dateTimes[] = date("Y-m-d H:i", strtotime(str_replace(array_keys($month), $month, $date)." ".$startTime));
+                //$dateTimes[] = date("Y-m-d H:i", strtotime(str_replace(array_keys($month), $month, $date)." ".$startTime));
+                $dateTimes[] = [
+                    'date' => date("Y-m-d", strtotime(str_replace(array_keys($month), $month, $date))),
+                    'start_times' => [$startTime]
+                ];
             }
         }
         $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/div[@class='performance__duration']/span", $root->item(0));
