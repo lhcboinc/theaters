@@ -14,6 +14,17 @@ define({ "api": [
             "optional": false,
             "field": "limit",
             "description": ""
+          },
+          {
+            "group": "Parameter",
+            "type": "string",
+            "allowedValues": [
+              "theater",
+              "movie"
+            ],
+            "optional": false,
+            "field": "type",
+            "description": ""
           }
         ]
       }

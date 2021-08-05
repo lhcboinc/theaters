@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetPerformancesRequest;
 use App\Models\Performances;
 use Illuminate\Http\Request;
 
@@ -14,12 +15,19 @@ class PerformancesController extends Controller
      * @apiGroup Performances
      *
      * @apiParam {integer} limit
+     * @apiParam {string=theater,movie} type
      */
 
-    public function index(Request $request)
+    public function index(GetPerformancesRequest $request)
     {
-        $limit = $request->limit;
-        $collection = Performances::with(['theaters'])->limit($limit)->get();
+        $limit = @$request->limit;
+        $type = @$request->type;
+        $query = Performances::with(['theaters']);
+        if ($type)
+            $query->where('type', $type);
+        if ($limit)
+            $query->limit($limit);
+        $collection = $query->get();
         $collection->map(function ($item) {
             $item['seance_dt_list'] = json_decode($item['seance_dt_list']);
             $item['image_urls'] = json_decode($item['image_urls']);
