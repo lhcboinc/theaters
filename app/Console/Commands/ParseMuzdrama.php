@@ -6,6 +6,8 @@ use App\Models\Performances;
 use App\Models\Theaters;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class ParseMuzdrama extends Command
 {
@@ -77,6 +79,10 @@ class ParseMuzdrama extends Command
             if (in_array($performanceData['title'], array_column(self::$performances, 'title'))) {
                 print "Edit performance\n";
                 $performance = Performances::where('title', $performanceData['title'])->first();
+                foreach (json_decode($performance->images) as $item) {
+                    unlink(Storage::path("images/{$item}"));
+                    unlink(Storage::path("images/thumb_{$item}"));
+                }
             } else {
                 print "Create performance\n";
                 $performance = new Performances;
@@ -86,7 +92,7 @@ class ParseMuzdrama extends Command
             $performance->description = $performanceData['description'];
             $performance->duration = $performanceData['duration'];
             $performance->age_limit = $performanceData['age_limit'];
-            $performance->image_urls = $performanceData['image_urls'];
+            $performance->images = json_encode([self::saveImage($performanceData['image_url'])]);
             $performance->type = Performances::TYPE_THEATER;
             $performance->save();
             $performance->theaters()->sync([self::$theaterId => [
@@ -151,7 +157,7 @@ class ParseMuzdrama extends Command
         @(list($hours, $minutes) = explode(':', trim(@$element->item(0)->nodeValue, ' ч.')));
         $duration = $hours * 60 + $minutes;
         $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/h1[@class='performance__title']", $root->item(0));
-        $title = @$element->item(0)->nodeValue;
+        $title = @trim($element->item(0)->nodeValue);
 
         $element = $finder->query(".//div[@class='afisha__info afisha__info_content performance flex flex-column']/div[@class='afisha__content content']", $root->item(0));
         $description = trim(@$element->item(0)->nodeValue);
@@ -162,7 +168,30 @@ class ParseMuzdrama extends Command
             'duration' => $duration,
             'age_limit' => $ageLimit,
             'seance_dt_list' => json_encode($dateTimes),
-            'image_urls' => json_encode([$imgSrc]),
+            'image_url' => $imgSrc,
         ];
+    }
+
+    public static function saveImage($srcUrl)
+    {
+        Image::configure(array('driver' => 'gd'));
+        $imageContent = Http::get($srcUrl);
+        $fileName = uniqid() . ".jpeg";
+        Storage::disk('local')->put("images/$fileName", '');
+        $path = Storage::path("images/$fileName");
+        $imageTmp = imagecreatefromstring($imageContent);
+        imagejpeg($imageTmp, $path);
+        imagedestroy($imageTmp);
+
+        $img = Image::make($path)->resize(250, null, function ($constraint) {
+            $constraint->aspectRatio();
+        });
+
+        $thumbFileName = 'thumb_' . $fileName;
+        Storage::disk('local')->put("images/$thumbFileName", '');
+        $path = Storage::path("images/$thumbFileName");
+        $img->save($path);
+
+        return $fileName;
     }
 }

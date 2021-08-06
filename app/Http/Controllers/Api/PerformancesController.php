@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GetPerformancesRequest;
 use App\Models\Performances;
-use Illuminate\Http\Request;
 
 class PerformancesController extends Controller
 {
@@ -28,8 +27,11 @@ class PerformancesController extends Controller
         if ($limit)
             $query->limit($limit);
         $collection = $query->get();
-        $collection->map(function ($item) {
-            $item['image_urls'] = json_decode($item['image_urls']);
+        $collection->map(function ($item) use ($request) {
+            $imageUrls = [];
+            foreach (json_decode($item['images']) as $image)
+                $imageUrls[] = $request->getScheme() . '//' . $request->getHttpHost() . '/images/thumb_' . $image;
+            $item['image_urls'] = $imageUrls;
             $seance_dt_list = $item->theaters[0]->pivot->seance_dt_list;
             $item->theaters[0]->pivot->seance_dt_list = json_decode($seance_dt_list);
         });

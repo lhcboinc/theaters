@@ -6,6 +6,8 @@ use App\Models\Performances;
 use App\Models\Theaters;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class ParseFuntura extends Command
 {
@@ -73,6 +75,10 @@ class ParseFuntura extends Command
             if (in_array($performanceData['title'], array_column(self::$performances, 'title'))) {
                 print "Edit performance\n";
                 $performance = Performances::where('title', $performanceData['title'])->first();
+                foreach (json_decode($performance->images) as $item) {
+                    unlink(Storage::path("images/{$item}"));
+                    unlink(Storage::path("images/thumb_{$item}"));
+                }
             } else {
                 print "Create performance\n";
                 $performance = new Performances;
@@ -81,7 +87,8 @@ class ParseFuntura extends Command
             $performance->title = $performanceData['title'];
             $performance->description = $performanceData['description'];
             $performance->age_limit = $performanceData['age_limit'];
-            $performance->image_urls = $performanceData['image_urls'];
+            //$performance->image_urls = $performanceData['image_urls'];
+            $performance->images = json_encode([self::saveImage($performanceData['image_url'])]);
             $performance->type = Performances::TYPE_MOVIE;
             $performance->save();
             $performance->theaters()->sync([self::$theaterId => [
@@ -126,7 +133,7 @@ class ParseFuntura extends Command
             'description' => $description,
             'age_limit' => $ageLimit,
             'seance_dt_list' => json_encode(self::parseDates($finder, $root)),
-            'image_urls' => json_encode([$imgSrc]),
+            'image_url' => $imgSrc,
         ];
     }
 
@@ -182,5 +189,28 @@ class ParseFuntura extends Command
             ];
         }
         return $data;
+    }
+
+    public static function saveImage($srcUrl)
+    {
+        Image::configure(array('driver' => 'gd'));
+        $imageContent = Http::get($srcUrl);
+        $fileName = uniqid() . ".jpeg";
+        Storage::disk('local')->put("images/$fileName", '');
+        $path = Storage::path("images/$fileName");
+        $imageTmp = imagecreatefromstring($imageContent);
+        imagejpeg($imageTmp, $path);
+        imagedestroy($imageTmp);
+
+        $img = Image::make($path)->resize(250, null, function ($constraint) {
+            $constraint->aspectRatio();
+        });
+
+        $thumbFileName = 'thumb_' . $fileName;
+        Storage::disk('local')->put("images/$thumbFileName", '');
+        $path = Storage::path("images/$thumbFileName");
+        $img->save($path);
+
+        return $fileName;
     }
 }
