@@ -58,7 +58,7 @@ class ParseFuntura extends Command
 
     public static function parseMainPage()
     {
-        $response = Http::get(self::HOST . '/repertoire');
+        $response = Http::withOptions(['proxy' => 'https://GDHcxO:ABz2sX@185.220.35.242:45935'])->get(self::HOST . '/repertoire');
         if (!$response)
             throw new \Exception('Error reading page, stopped');
         $doc = new \DOMDocument();
@@ -202,7 +202,7 @@ class ParseFuntura extends Command
         imagejpeg($imageTmp, $path);
         imagedestroy($imageTmp);
 
-        $img = Image::make($path)->resize(250, null, function ($constraint) {
+        $img = Image::make($path)->resize(150, null, function ($constraint) {
             $constraint->aspectRatio();
         });
 
