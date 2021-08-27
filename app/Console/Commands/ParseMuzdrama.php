@@ -180,7 +180,7 @@ class ParseMuzdrama extends Command
         Storage::disk('local')->put("images/$fileName", '');
         $path = Storage::path("images/$fileName");
         $imageTmp = imagecreatefromstring($imageContent);
-        imagejpeg($imageTmp, $path);
+        imagejpeg($imageTmp, $path, 80);
         imagedestroy($imageTmp);
 
         $img = Image::make($path)->resize(150, null, function ($constraint) {
