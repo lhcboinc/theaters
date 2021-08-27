@@ -58,7 +58,8 @@ class ParseFuntura extends Command
 
     public static function parseMainPage()
     {
-        $response = Http::withOptions(['proxy' => 'https://GDHcxO:ABz2sX@185.220.35.242:45935'])->get(self::HOST . '/repertoire');
+        //$response = Http::withOptions(['proxy' => 'socks5h://wU78vY:BLsSgz@185.220.35.242:46008'])->get(self::HOST . '/repertoire');
+        $response = Http::get(self::HOST . '/repertoire');
         if (!$response)
             throw new \Exception('Error reading page, stopped');
         $doc = new \DOMDocument();
@@ -76,8 +77,8 @@ class ParseFuntura extends Command
                 print "Edit performance\n";
                 $performance = Performances::where('title', $performanceData['title'])->first();
                 foreach (json_decode($performance->images) as $item) {
-                    unlink(Storage::path("images/{$item}"));
-                    unlink(Storage::path("images/thumb_{$item}"));
+                    @unlink(Storage::path("images/{$item}"));
+                    @unlink(Storage::path("images/thumb_{$item}"));
                 }
             } else {
                 print "Create performance\n";

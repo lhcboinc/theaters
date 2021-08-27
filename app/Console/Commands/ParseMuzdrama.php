@@ -72,7 +72,7 @@ class ParseMuzdrama extends Command
             $item = $finder->query(".//div/a", $node);
             $href = $item->item(0)->attributes->item(0)->value;
             $item = $finder->query(".//div/div[@class='booking__price']/b", $node);
-            $price = $item->item(0)->nodeValue;
+            $price = @$item->item(0)->nodeValue;
 
             $performanceData = self::parsePerformance(self::HOST . $href);
             $isNew = false;
@@ -80,8 +80,8 @@ class ParseMuzdrama extends Command
                 print "Edit performance\n";
                 $performance = Performances::where('title', $performanceData['title'])->first();
                 foreach (json_decode($performance->images) as $item) {
-                    unlink(Storage::path("images/{$item}"));
-                    unlink(Storage::path("images/thumb_{$item}"));
+                    @unlink(Storage::path("images/{$item}"));
+                    @unlink(Storage::path("images/thumb_{$item}"));
                 }
             } else {
                 print "Create performance\n";
