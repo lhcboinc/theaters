@@ -29,8 +29,10 @@ class PerformancesController extends Controller
         $collection = $query->get();
         $collection->map(function ($item) use ($request) {
             $imageUrls = [];
-            foreach (json_decode($item['images']) as $image)
-                $imageUrls[] = $request->getScheme() . '://' . $request->getHttpHost() . '/images/thumb_' . $image;
+            if (!empty($item['images'])) {
+                foreach (json_decode($item['images']) as $image)
+                    $imageUrls[] = $request->getScheme() . '://' . $request->getHttpHost() . '/images/thumb_' . $image;
+            }
             $item['image_urls'] = $imageUrls;
             $seance_dt_list = $item->theaters[0]->pivot->seance_dt_list;
             $item->theaters[0]->pivot->seance_dt_list = json_decode($seance_dt_list);
