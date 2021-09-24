@@ -11,7 +11,7 @@ define({ "api": [
           {
             "group": "Parameter",
             "type": "integer",
-            "optional": false,
+            "optional": true,
             "field": "limit",
             "description": ""
           },
@@ -22,8 +22,15 @@ define({ "api": [
               "theater",
               "movie"
             ],
-            "optional": false,
+            "optional": true,
             "field": "type",
+            "description": ""
+          },
+          {
+            "group": "Parameter",
+            "type": "integer",
+            "optional": true,
+            "field": "id",
             "description": ""
           }
         ]

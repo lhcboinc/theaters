@@ -13,19 +13,23 @@ class PerformancesController extends Controller
      * @apiName GetPerformances
      * @apiGroup Performances
      *
-     * @apiParam {integer} limit
-     * @apiParam {string=theater,movie} type
+     * @apiParam {integer} [limit]
+     * @apiParam {string=theater,movie} [type]
+     * @apiParam {integer} [id]
      */
 
     public function index(GetPerformancesRequest $request)
     {
         $limit = @$request->limit;
         $type = @$request->type;
+        $id = @$request->id;
         $query = Performances::with(['theaters']);
         if ($type)
             $query->where('type', $type);
         if ($limit)
             $query->limit($limit);
+        if ($id)
+            $query->where('id', $id);
         $collection = $query->get();
         $collection->map(function ($item) use ($request) {
             $imageUrls = [];

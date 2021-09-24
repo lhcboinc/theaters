@@ -26,6 +26,7 @@ class GetPerformancesRequest extends FormRequest
         return [
             'limit' => 'nullable|integer',
             'type' => 'nullable|in:theater,movie',
+            'id' => 'nullable|exists:performances,id,deleted_at,NULL'
         ];
     }
 }
